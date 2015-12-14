@@ -1,16 +1,20 @@
+# -*- coding: utf-8 -*-
+"""Spamcheck with Akismet"""
+
 import requests
 
 # Akismet Settings
 AKISMET_USER_AGENT = "Pykismet/0.1.1"
 
 # API URIs
+AKISMET_VERIFY_URL = "https://rest.akismet.com/1.1/verify-key"
 AKISMET_CHECK_URL = "rest.akismet.com/1.1/comment-check"
 AKISMET_SUBMIT_SPAM_URL = "rest.akismet.com/1.1/submit-spam"
 AKISMET_SUBMIT_HAM_URL = "rest.akismet.com/1.1/submit-ham"
 
 # API Permitted parameter lists
 AKISMET_CHECK_VALID_PARAMETERS = {
-        'blog', 
+        'blog',
         'user_ip',
         'user_agent',
         'referrer',
@@ -50,7 +54,7 @@ class AkismetServerError(AkismetError):
     pass
 
 # The main Akismet class
-class Akismet:
+class Akismet(object):
     def __init__(self, api_key=None, blog_url=None, user_agent=None):
         self.api_key = api_key
         self.blog_url = blog_url
@@ -64,7 +68,7 @@ class Akismet:
         # Check if the API key is set
         if self.api_key is None:
             raise MissingApiKeyError("api_key must be set on the akismet object before calling any API methods.")
-        
+
         # Throw appropriate exception if any mandatory parameters are missing
         if not 'blog' in parameters:
             if self.blog_url is None:
@@ -76,7 +80,7 @@ class Akismet:
             raise MissingParameterError("user_agent is a required parameter")
         if not 'referrer' in parameters:
             raise MissingParameterError("referrer is a required parameter")
-        
+
         # Check for any invalid extra parameters
         leftovers = set(parameters.keys()).difference_update(AKISMET_CHECK_VALID_PARAMETERS)
         if leftovers and leftovers.count() != 0:
@@ -88,7 +92,7 @@ class Akismet:
         }
 
         # Construct the GET request to akismet.
-        r = requests.post("http://"+self.api_key+"."+AKISMET_CHECK_URL, data=parameters, headers=headers)
+        r = requests.post("https://"+self.api_key+"."+AKISMET_CHECK_URL, data=parameters, headers=headers)
 
         # Deal with the response
         if r.text == "false":
@@ -97,6 +101,21 @@ class Akismet:
             return True
         else:
             raise AkismetServerError("Akismet server returned an error: "+r.text)
+
+    def verify_key(self, blog_url=None):
+        if not blog_url and not self.blog_url:
+            raise MissingParameterError("blog is a required parameter if blog_url is not set on the akismet object")
+        if not blog_url:
+            blog_url=self.blog_url
+        if self.api_key is None:
+            raise MissingApiKeyError("api_key must be set on the akismet object before calling any API methods.")
+        parameters = {'blog': blog_url, 'key': self.api_key}
+        r = requests.post(AKISMET_VERIFY_URL, parameters)
+        if r.status_code == 200:
+            return True
+        else:
+            raise AkismetServerError("Akismet server returned an error: " + r.text)
+
     def submit_spam(self, parameters):
         self.submit("spam", parameters)
 
@@ -137,9 +156,9 @@ class Akismet:
 
         # Construct the GET request to akismet.
         if t is "spam":
-            url = "http://"+self.api_key+"."+AKISMET_SUBMIT_SPAM_URL
+            url = "https://"+self.api_key+"."+AKISMET_SUBMIT_SPAM_URL
         elif t is "ham":
-            url = "http://"+self.api_key+"."+AKISMET_SUBMIT_HAM_URL
+            url = "https://"+self.api_key+"."+AKISMET_SUBMIT_HAM_URL
         else:
             raise InternalPykismetError("submit called with invalid t")
 
