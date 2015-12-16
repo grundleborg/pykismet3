@@ -9,10 +9,6 @@ The Following Akismet API Calls are currently supported:
 * Comment Check
 * Submit Ham
 * Submit Spam
-
-## Unsupported API
-
-The following Akismet API Calls are not yet supported:
 * Key Verification
 
 ## Installation

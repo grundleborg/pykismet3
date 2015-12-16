@@ -64,6 +64,13 @@ class Akismet(object):
     # Returns: True (for Spam)
     #          False (for Ham)
     def check(self, parameters):
+        """
+        This is the call you will make the most.
+        It takes a number of arguments and characteristics about the submitted content
+        and then returns a thumbs up or thumbs down. Performance can drop dramatically
+        if you choose to exclude data points. The more data you send Akismet about each
+        comment, the greater the accuracy.
+        """
 
         # Check if the API key is set
         if self.api_key is None:
@@ -103,6 +110,12 @@ class Akismet(object):
             raise AkismetServerError("Akismet server returned an error: "+r.text)
 
     def verify_key(self, blog_url=None):
+        """
+        Key verification authenticates your key before calling the comment check,
+        submit spam, or submit ham methods. This is the first call that you should
+        make to Akismet and is especially useful if you will have multiple users
+        with their own Akismet subscriptions using your application.
+        """
         if not blog_url and not self.blog_url:
             raise MissingParameterError("blog is a required parameter if blog_url is not set on the akismet object")
         if not blog_url:
@@ -117,9 +130,28 @@ class Akismet(object):
             raise AkismetServerError("Akismet server returned an error: " + r.text)
 
     def submit_spam(self, parameters):
+        """
+        This call is for submitting comments that weren't marked as spam but should have been.
+
+        It is very important that the values you submit with this call match those of your
+        comment-check calls as closely as possible. In order to learn from its mistakes,
+        Akismet needs to match your missed spam and false positive reports to the original
+        comment-check API calls made when the content was first posted. While it is normal
+        for less information to be available for submit-spam and submit-ham calls
+        (most comment systems and forums will not store all metadata), you should ensure
+        that the values that you do send match those of the original content.
+        """
         self.submit("spam", parameters)
 
     def submit_ham(self, parameters):
+        """
+        This call is intended for the submission of false positives -
+        items that were incorrectly classified as spam by Akismet.
+        It takes identical arguments as comment check and submit spam.
+
+        You should ensure that any values you're passing here match up
+        with the original and corresponding comment-check call.
+        """
         self.submit("ham", parameters)
 
     def submit(self, t, parameters):
