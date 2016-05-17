@@ -10,7 +10,7 @@ AKISMET_SUBMIT_HAM_URL = "rest.akismet.com/1.1/submit-ham"
 
 # API Permitted parameter lists
 AKISMET_CHECK_VALID_PARAMETERS = {
-        'blog', 
+        'blog',
         'user_ip',
         'user_agent',
         'referrer',
@@ -64,7 +64,7 @@ class Akismet:
         # Check if the API key is set
         if self.api_key is None:
             raise MissingApiKeyError("api_key must be set on the akismet object before calling any API methods.")
-        
+
         # Throw appropriate exception if any mandatory parameters are missing
         if not 'blog' in parameters:
             if self.blog_url is None:
@@ -76,10 +76,10 @@ class Akismet:
             raise MissingParameterError("user_agent is a required parameter")
         if not 'referrer' in parameters:
             raise MissingParameterError("referrer is a required parameter")
-        
+
         # Check for any invalid extra parameters
-        leftovers = set(parameters.keys()).difference_update(AKISMET_CHECK_VALID_PARAMETERS)
-        if leftovers and leftovers.count() != 0:
+        leftovers = set(parameters.keys()).difference(AKISMET_CHECK_VALID_PARAMETERS)
+        if leftovers and len(leftovers) != 0:
             raise ExtraParametersError("The following unrecognised parameters were supplied:"+str(leftovers))
 
         # Build the HTTP Headers for the Akismet query
@@ -150,4 +150,3 @@ class Akismet:
             return
         else:
             raise AkismetServerError("Akismet server returned an error: "+r.text)
-
